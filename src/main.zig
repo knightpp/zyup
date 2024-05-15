@@ -30,17 +30,19 @@ pub fn main() !void {
         break :path args.next() orelse return Error.not_enough_args;
     };
 
-    const parsed = parsed: {
+    const json_bytes = json: {
         const file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
-        const pkg_bytes = try file.readToEndAlloc(alloc, 16 * 1024);
-        defer alloc.free(pkg_bytes);
+        break :json try file.readToEndAlloc(alloc, 16 * 1024);
+    };
+    defer alloc.free(json_bytes);
 
+    const parsed = parsed: {
         break :parsed try std.json.parseFromSlice(
             Package,
             alloc,
-            pkg_bytes,
+            json_bytes,
             .{ .ignore_unknown_fields = true },
         );
     };
