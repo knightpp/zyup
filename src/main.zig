@@ -22,24 +22,28 @@ pub fn main() !void {
 
     const alloc = gpa.allocator();
 
-    var args = std.process.args();
-    defer args.deinit();
+    const path: []const u8 = path: {
+        var args = try std.process.argsWithAllocator(alloc);
+        defer args.deinit();
 
-    _ = args.skip();
-    const path: []const u8 = args.next() orelse return Error.not_enough_args;
+        _ = args.skip();
+        break :path args.next() orelse return Error.not_enough_args;
+    };
 
-    const file = try std.fs.cwd().openFile(path, .{});
-    defer file.close();
+    const parsed = parsed: {
+        const file = try std.fs.cwd().openFile(path, .{});
+        defer file.close();
 
-    const pkg_bytes = try file.readToEndAlloc(alloc, 16 * 1024);
-    defer alloc.free(pkg_bytes);
+        const pkg_bytes = try file.readToEndAlloc(alloc, 16 * 1024);
+        defer alloc.free(pkg_bytes);
 
-    const parsed = try std.json.parseFromSlice(
-        Package,
-        alloc,
-        pkg_bytes,
-        .{ .ignore_unknown_fields = true },
-    );
+        break :parsed try std.json.parseFromSlice(
+            Package,
+            alloc,
+            pkg_bytes,
+            .{ .ignore_unknown_fields = true },
+        );
+    };
     defer parsed.deinit();
 
     const pkg = parsed.value;
