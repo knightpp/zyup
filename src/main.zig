@@ -50,26 +50,24 @@ pub fn main() !void {
 
     const pkg = parsed.value;
 
-    var it = pkg.dependencies.map.iterator();
-    while (it.next()) |value| {
-        try update_package(alloc, value.key_ptr.*);
-    }
-
-    it = pkg.devDependencies.map.iterator();
-    while (it.next()) |value| {
-        try update_package(alloc, value.key_ptr.*);
+    const deps = .{
+        pkg.dependencies.map,
+        pkg.devDependencies.map,
+    };
+    inline for (deps) |map| {
+        var it = map.iterator();
+        while (it.next()) |value| {
+            try update_package(alloc, value.key_ptr.*);
+        }
     }
 }
 
 fn update_package(alloc: std.mem.Allocator, name: []const u8) !void {
-    var nameArg = try alloc.alloc(u8, name.len + 2);
+    const nameArg = try alloc.alloc(u8, name.len + 2);
     defer alloc.free(nameArg);
 
-    for (name, 0..) |byte, i| {
-        nameArg[i] = byte;
-    }
-    nameArg[name.len] = '@';
-    nameArg[name.len + 1] = '^';
+    std.mem.copyForwards(u8, nameArg, name);
+    std.mem.copyForwards(u8, nameArg[name.len..], "@^");
 
     const argv: [3][]const u8 = .{
         "yarn",
