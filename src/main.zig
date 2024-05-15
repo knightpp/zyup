@@ -52,28 +52,35 @@ pub fn main() !void {
 
     var it = pkg.dependencies.map.iterator();
     while (it.next()) |value| {
-        const name = value.key_ptr.*;
+        try update_package(alloc, value.key_ptr.*);
+    }
 
-        var nameArg = try alloc.alloc(u8, name.len + 2);
-        defer alloc.free(nameArg);
+    it = pkg.devDependencies.map.iterator();
+    while (it.next()) |value| {
+        try update_package(alloc, value.key_ptr.*);
+    }
+}
 
-        for (name, 0..) |byte, i| {
-            nameArg[i] = byte;
-        }
-        nameArg[name.len] = '@';
-        nameArg[name.len + 1] = '^';
+fn update_package(alloc: std.mem.Allocator, name: []const u8) !void {
+    var nameArg = try alloc.alloc(u8, name.len + 2);
+    defer alloc.free(nameArg);
 
-        const argv: [3][]const u8 = .{
-            "yarn",
-            "upgrade",
-            nameArg,
-        };
+    for (name, 0..) |byte, i| {
+        nameArg[i] = byte;
+    }
+    nameArg[name.len] = '@';
+    nameArg[name.len + 1] = '^';
 
-        var proc = std.process.Child.init(&argv, alloc);
+    const argv: [3][]const u8 = .{
+        "yarn",
+        "upgrade",
+        nameArg,
+    };
 
-        const term = try proc.spawnAndWait();
-        if (term.Exited != 0) {
-            return Error.yarn_nonzero_exit;
-        }
+    var proc = std.process.Child.init(&argv, alloc);
+
+    const term = try proc.spawnAndWait();
+    if (term.Exited != 0) {
+        return Error.yarn_nonzero_exit;
     }
 }
