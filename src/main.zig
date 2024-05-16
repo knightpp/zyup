@@ -7,8 +7,8 @@ const Package = struct {
 };
 
 const Error = error{
-    not_enough_args,
-    yarn_nonzero_exit,
+    NotEnoughArgs,
+    YarnNonZeroExit,
 };
 
 pub fn main() !void {
@@ -27,7 +27,7 @@ pub fn main() !void {
         defer args.deinit();
 
         _ = args.skip();
-        break :path args.next() orelse return Error.not_enough_args;
+        break :path args.next() orelse return Error.NotEnoughArgs;
     };
 
     const json_bytes = json: {
@@ -55,14 +55,12 @@ pub fn main() !void {
     inline for (deps) |map| {
         var it = map.iterator();
         while (it.next()) |value| {
-            try update_package(alloc, value.key_ptr.*);
+            try updatePackage(alloc, value.key_ptr.*);
         }
     }
 }
 
-fn update_package(alloc: std.mem.Allocator, name: []const u8) !void {
-    const postfix = "@^";
-    const nameArg = try alloc.alloc(u8, name.len + postfix.len);
+fn updatePackage(alloc: std.mem.Allocator, name: []const u8) !void {
     defer alloc.free(nameArg);
 
     std.mem.copyForwards(u8, nameArg, name);
@@ -78,6 +76,6 @@ fn update_package(alloc: std.mem.Allocator, name: []const u8) !void {
 
     const term = try proc.spawnAndWait();
     if (term.Exited != 0) {
-        return Error.yarn_nonzero_exit;
+        return Error.YarnNonZeroExit;
     }
 }
