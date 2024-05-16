@@ -61,10 +61,8 @@ pub fn main() !void {
 }
 
 fn updatePackage(alloc: std.mem.Allocator, name: []const u8) !void {
+    const nameArg = try std.mem.concat(alloc, u8, &[_][]const u8{ name, "@^" });
     defer alloc.free(nameArg);
-
-    std.mem.copyForwards(u8, nameArg, name);
-    std.mem.copyForwards(u8, nameArg[name.len..], postfix);
 
     const argv: [3][]const u8 = .{
         "yarn",
