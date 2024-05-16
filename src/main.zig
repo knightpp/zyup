@@ -38,14 +38,12 @@ pub fn main() !void {
     };
     defer alloc.free(json_bytes);
 
-    const parsed = parsed: {
-        break :parsed try std.json.parseFromSlice(
-            Package,
-            alloc,
-            json_bytes,
-            .{ .ignore_unknown_fields = true },
-        );
-    };
+    const parsed = try std.json.parseFromSlice(
+        Package,
+        alloc,
+        json_bytes,
+        .{ .ignore_unknown_fields = true },
+    );
     defer parsed.deinit();
 
     const pkg = parsed.value;
