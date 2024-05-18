@@ -15,7 +15,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const check = gpa.deinit();
-        if (check == std.heap.Check.leak) {
+        if (check == .leak) {
             std.debug.print("memory leak detected", .{});
         }
     }
