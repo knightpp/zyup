@@ -22,8 +22,8 @@ pub fn main() !void {
 
     const alloc = gpa.allocator();
 
-        var args = try std.process.argsWithAllocator(alloc);
-        defer args.deinit();
+    var args = try std.process.argsWithAllocator(alloc);
+    defer args.deinit();
 
     const path = path: {
         _ = args.skip();
@@ -48,6 +48,14 @@ pub fn main() !void {
 
     const pkg = parsed.value;
 
+    var path_cwd: ?std.fs.Dir = if (std.fs.path.dirname(path)) |dirname|
+        try std.fs.cwd().openDir(dirname, .{})
+    else
+        null;
+    defer if (path_cwd) |*dir| dir.close();
+
+    const wd = path_cwd orelse std.fs.cwd();
+
     const deps = .{
         pkg.dependencies.map,
         pkg.devDependencies.map,
@@ -55,12 +63,12 @@ pub fn main() !void {
     inline for (deps) |map| {
         var it = map.iterator();
         while (it.next()) |value| {
-            try updatePackage(alloc, value.key_ptr.*);
+            try updatePackage(alloc, value.key_ptr.*, wd);
         }
     }
 }
 
-fn updatePackage(alloc: std.mem.Allocator, name: []const u8) !void {
+fn updatePackage(alloc: std.mem.Allocator, name: []const u8, cwd: std.fs.Dir) !void {
     const nameArg = try std.mem.concat(alloc, u8, &[_][]const u8{ name, "@^" });
     defer alloc.free(nameArg);
 
@@ -71,6 +79,7 @@ fn updatePackage(alloc: std.mem.Allocator, name: []const u8) !void {
     };
 
     var proc = std.process.Child.init(&argv, alloc);
+    proc.cwd_dir = cwd;
 
     const term = try proc.spawnAndWait();
     if (term.Exited != 0) {
