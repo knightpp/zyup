@@ -22,10 +22,10 @@ pub fn main() !void {
 
     const alloc = gpa.allocator();
 
-    const path = path: {
         var args = try std.process.argsWithAllocator(alloc);
         defer args.deinit();
 
+    const path = path: {
         _ = args.skip();
         break :path args.next() orelse return Error.NotEnoughArgs;
     };
