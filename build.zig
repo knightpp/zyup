@@ -35,7 +35,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .single_threaded = true,
-        .strip = true,
+        .strip = if (optimize == .ReleaseSmall) true else null,
     });
 
     // This declares intent for the executable to be installed into the
