@@ -22,7 +22,7 @@ pub fn main() !void {
 
     const alloc = gpa.allocator();
 
-    const path: []const u8 = path: {
+    const path = path: {
         var args = try std.process.argsWithAllocator(alloc);
         defer args.deinit();
 
@@ -64,7 +64,7 @@ fn updatePackage(alloc: std.mem.Allocator, name: []const u8) !void {
     const nameArg = try std.mem.concat(alloc, u8, &[_][]const u8{ name, "@^" });
     defer alloc.free(nameArg);
 
-    const argv: [3][]const u8 = .{
+    const argv = .{
         "yarn",
         "upgrade",
         nameArg,
